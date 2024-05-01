@@ -1,0 +1,39 @@
+name: Autograding Tests
+'on':
+- push
+- workflow_dispatch
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Autograder Script / 357
+      id: autograder-script-357
+      uses: education/autograding-command-grader@v1
+      with:
+        test-name: Autograder Script / 357
+        setup-command: wget -q --no-cache https://raw.githubusercontent.com/amigler/357-s24/main/autograder/a2/ag.sh
+        command: bash ag.sh
+        timeout: 10
+    - name: Valgrind
+      id: valgrind
+      uses: education/autograding-command-grader@v1
+      with:
+        test-name: Valgrind
+        setup-command: wget -q --no-cache https://raw.githubusercontent.com/amigler/357-s24/main/autograder/a2/ag.sh
+        command: bash ag.sh valgrind
+        timeout: 10
+    - name: Autograding Reporter
+      uses: education/autograding-grading-reporter@v1
+      env:
+        AUTOGRADER-SCRIPT-357_RESULTS: "${{steps.autograder-script-357.outputs.result}}"
+        VALGRIND_RESULTS: "${{steps.valgrind.outputs.result}}"
+      with:
+        runners: autograder-script-357,valgrind
