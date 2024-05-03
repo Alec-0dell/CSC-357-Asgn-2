@@ -67,6 +67,7 @@ int main(int argc, char *argv[])
         if (fgets(com_line, sizeof(com_line), stdin) != NULL)
         {
             //split the command and arguments
+            com_ln_idx = 0;
             for (com_ln_idx = 0; com_line[com_ln_idx] != ' ' && com_line[com_ln_idx] != '\n'; com_ln_idx++)
             {
                 command[com_ln_idx] = com_line[com_ln_idx];
@@ -82,7 +83,7 @@ int main(int argc, char *argv[])
                 }
             }
             command[++com_ln_idx] = 0;
-            printf("command: %s , arg: %s", command, name);
+            printf("command: %s , arg: %s \n", command, name);
             //run the correct command 
             if (strcmp(command, "ls") == 0) // ls command
             {
