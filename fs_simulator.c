@@ -1,39 +1,18 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <limits.h>
-
-#define MAX_NAME_LENGTH 32
-#define MAX_INODES 1024
-
-int ls(int);
-int cd(int, char *);
-
-typedef struct
-{
-    uint32_t inode_number;
-    char type; // 'd' for directory, 'f' for file
-} inode;
+#include "fs_simulator.h"
 
 inode inodes[MAX_INODES];
-int cur_inode_idx = 0;
-
-typedef struct
-{
-    uint32_t inode_number;
-    char name[32];
-} dir_ent;
-
+uint32_t size = 0;
+int cur_inode_idx;
 dir_ent dir[MAX_INODES];
+
 
 int main(int argc, char *argv[])
 {
     int inodes_list_file;
-    char com_line[512];
+    char com_line[38]; // max 5 char command + ' ' + max 32 char filename
+    int com_ln_idx = 0;
+    char command[6]; // for our case the most number of arguments is two.
+    char name[33];
 
     // check for correct arguments
     if (argc != 2)
@@ -56,16 +35,12 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0, j = 0; j < MAX_INODES; j++)
+    for (int j = 0; j < MAX_INODES; j++)
     {
-        read(inodes_list_file, &inodes[i], 5);
-        if (inodes[i].inode_number < UINT_MAX && (inodes[i].type == 'f' || inodes[i].type == 'd'))
+        read(inodes_list_file, &inodes[size], 5);
+        if (inodes[size].inode_number < UINT_MAX && (inodes[size].type == 'f' || inodes[size].type == 'd'))
         {
-            i++; // valid i-node
-        }
-        else
-        {
-            i--; // invalid i-node
+            size++; // valid i-node
         }
     }
 
@@ -74,34 +49,49 @@ int main(int argc, char *argv[])
         printf("> ");
         if (fgets(com_line, sizeof(com_line), stdin) != NULL)
         {
-            if (strcmp(com_line, "ls\n") == 0)
+            for (com_ln_idx = 0; com_line[com_ln_idx] != ' ' && com_line[com_ln_idx] != '\n'; com_ln_idx++)
+            {
+                command[com_ln_idx] = com_line[com_ln_idx];
+            }
+            command[com_ln_idx] = 0;
+            com_ln_idx++;
+            for (int arg_idx = com_ln_idx; com_line[com_ln_idx] != '\n' && (com_ln_idx - arg_idx) < 32; com_ln_idx++)
+            {
+                name[com_ln_idx - arg_idx] = com_line[com_ln_idx];
+                if(com_line[com_ln_idx + 1] == '\n'){
+                    name[com_ln_idx - arg_idx + 1] = 0;
+                }
+            }
+            command[++com_ln_idx] = 0;
+            if (strcmp(command, "ls") == 0) // ls command
             {
                 ls(cur_inode_idx);
             }
-            else if (com_line[0] == 'c' && com_line[1] == 'd')
+            else if (strcmp(command, "cd") == 0) // cd command
             {
-                if (com_line[2] != ' ')
-                {
-                    printf("invalid arguments: cd <filename> \n");
-                }
-                else
-                {
-                    for (int i = 3; 1; i++)
-                    {
-                        if (com_line[i] == '\n')
-                        {
-                            com_line[i] = 0;
-                            break;
-                        }
-                    }
-                    cd(cur_inode_idx, &com_line[3]);
-                }
+                cd(cur_inode_idx, name);
             }
-            else if (strcmp(com_line, "exit\n") == 0)
+            else if (strcmp(command, "mkdir") == 0) // mkdir command
+            {
+                make_dir(cur_inode_idx, name);
+                printf("mkdir good \n");
+            }
+            else if (strcmp(command, "touch") == 0) // touch command
+            {
+                tch(cur_inode_idx, name);
+                printf("touch good \n");
+            }
+            else if (strcmp(command, "exit") == 0) // exit command
             {
                 return 0;
             }
+            else // unknown command command
+            {
+                printf("No such command \n");
+            }
         }
+        command[0] = 0;
+        name[0] = 0;
     }
 
     close(inodes_list_file);
@@ -117,7 +107,8 @@ int ls(int inodes_idx)
     snprintf(file_path, 32, "./%d", inodes_idx);
     dir_ls = open(file_path, O_RDWR);
 
-    if(inodes[inodes_idx].type == 'f'){
+    if (inodes[inodes_idx].type == 'f')
+    {
         return EXIT_SUCCESS;
     }
 
@@ -140,9 +131,9 @@ int cd(int inodes_idx, char *target)
 {
     int m = 0;
     int dir_ls;
-    char file_path[32];
-    snprintf(file_path, 32, "./%d", inodes_idx);
-    dir_ls = open(file_path, O_RDWR);
+    char dir_path[32];
+    snprintf(dir_path, 32, "./%d", inodes_idx);
+    dir_ls = open(dir_path, O_RDWR);
     if (dir_ls == -1)
     {
         fprintf(stderr, "Error: Unable to open current directory.\n");
@@ -159,6 +150,67 @@ int cd(int inodes_idx, char *target)
         m++;
     }
 
-    printf("No such file found \n");
+    printf("No such file found: %s \n", target);
     return EXIT_FAILURE;
+}
+
+int make_dir(int inodes_idx, char *target)
+{
+    return 1;
+}
+
+int tch(int inodes_idx, char *filename)
+{
+    int m = 0;
+    int new_file;
+    int dirr;
+    char file_mode = 'f';
+    char dir_path[32];
+    char file_path[32];
+    FILE *dirrr;
+    snprintf(dir_path, 32, "./%d", inodes_idx);
+    dirr = open(dir_path, O_RDWR);
+    if (dirr == -1)
+    {
+        fprintf(stderr, "Error: Unable to open current directory.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Check if file already exists
+    while (read(dirr, &dir[m], 36) > 0)
+    {
+        if (strcmp(dir[m].name, filename) == 0)
+        {
+            return EXIT_SUCCESS;
+        }
+        m++;
+    }
+
+    //create new file
+    snprintf(file_path, 32, "./%d", size);
+    size++;
+    new_file = open(file_path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    if (new_file == -1)
+    {
+        fprintf(stderr, "Error: Unable to create file '%s'.\n", filename);
+        return EXIT_FAILURE;
+    }
+    write(new_file, filename, 32); //fill the file with the file name
+
+    close(new_file);
+
+    //update directory
+    dirrr = fopen(dir_path, "a");
+    fwrite(&size, sizeof(uint32_t), 1, dirrr);
+    fwrite(filename, sizeof(char), 32, dirrr);
+    fclose(dirrr);
+
+
+    //update inodes
+    dirrr = fopen("./inodes_list", "a");
+    fwrite(&size, sizeof(uint32_t), 1, dirrr);
+    fwrite(&file_mode , sizeof(char), 1, dirrr);
+    fclose(dirrr);
+    
+    return EXIT_SUCCESS;
 }
