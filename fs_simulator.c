@@ -146,16 +146,12 @@ int cd(int inodes_idx, char *target)
     {
         if (strcmp(dir[m].name, target) == 0)
         {
-            if(inodes[dir[m].inode_number].type != 'd'){
-                printf("Cannot inspect a file, enter a directory name \n");
-                return EXIT_FAILURE;
-            }
             cur_inode_idx = dir[m].inode_number;
             return EXIT_SUCCESS;
         }
         m++;
     }
-    
+
     return EXIT_FAILURE;
 }
 
