@@ -23,7 +23,7 @@ typedef struct
     char name[MAX_NAME_LENGTH];
 } dir_ent;
 
-int ls(int inodes_idx, inode *inodes, dir_ent *dir);
-int cd(int inodes_idx, char *target, dir_ent *dir, int *cur_inode_idx);
-int make_dir(int inodes_idx, char *dirname, dir_ent *dir, uint32_t *size);
-int tch(int inodes_idx, char *filename, dir_ent *dir, uint32_t *size);
+int ls(int);
+int cd(int, char *);
+int make_dir(int, char *);
+int tch(int, char *);

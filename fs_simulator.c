@@ -1,14 +1,14 @@
 #include <stdint.h>
 #include "fs_simulator.h"
 
+inode inodes[MAX_INODES];
+uint32_t size = 0;
+int cur_inode_idx;
+dir_ent dir[MAX_INODES];
+
 
 int main(int argc, char *argv[])
 {
-    inode inodes[MAX_INODES];
-    uint32_t size = 0;
-    int cur_inode_idx;
-    dir_ent dir[MAX_INODES];
-
     int inodes_list_file;
     char com_line[38]; // max 5 char command + ' ' + max 32 char filename
     int com_ln_idx = 0;
@@ -71,19 +71,19 @@ int main(int argc, char *argv[])
             command[++com_ln_idx] = 0;
             if (strcmp(command, "ls") == 0) // ls command
             {
-                ls(cur_inode_idx, inodes, dir);
+                ls(cur_inode_idx);
             }
             else if (strcmp(command, "cd") == 0) // cd command
             {
-                cd(cur_inode_idx, name, dir, &cur_inode_idx);
+                cd(cur_inode_idx, name);
             }
             else if (strcmp(command, "mkdir") == 0) // mkdir command
             {
-                make_dir(cur_inode_idx, name, dir, &size);
+                make_dir(cur_inode_idx, name);
             }
             else if (strcmp(command, "touch") == 0) // touch command
             {
-                tch(cur_inode_idx, name, dir, &size);
+                tch(cur_inode_idx, name);
             }
             else if (strcmp(command, "exit") == 0) // exit command
             {
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-int ls(int inodes_idx, inode* inodes, dir_ent* dir)
+int ls(int inodes_idx)
 {
     int m = 0;
     int dir_ls;
@@ -129,7 +129,7 @@ int ls(int inodes_idx, inode* inodes, dir_ent* dir)
     return EXIT_SUCCESS;
 }
 
-int cd(int inodes_idx, char *target, dir_ent* dir, int* cur_inode_idx)
+int cd(int inodes_idx, char *target)
 {
     int m = 0;
     int dir_ls;
@@ -146,7 +146,7 @@ int cd(int inodes_idx, char *target, dir_ent* dir, int* cur_inode_idx)
     {
         if (strcmp(dir[m].name, target) == 0)
         {
-            *cur_inode_idx = dir[m].inode_number;
+            cur_inode_idx = dir[m].inode_number;
             return EXIT_SUCCESS;
         }
         m++;
@@ -155,7 +155,7 @@ int cd(int inodes_idx, char *target, dir_ent* dir, int* cur_inode_idx)
     return EXIT_FAILURE;
 }
 
-int make_dir(int inodes_idx, char *dirname, dir_ent* dir, uint32_t* size)
+int make_dir(int inodes_idx, char *dirname)
 {
     int m = 0;
     int new_file;
@@ -184,7 +184,7 @@ int make_dir(int inodes_idx, char *dirname, dir_ent* dir, uint32_t* size)
     }
 
     //create new file
-    snprintf(file_path, 32, "./%d", *size);
+    snprintf(file_path, 32, "./%d", size);
     new_file = open(file_path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if (new_file == -1)
     {
@@ -203,7 +203,7 @@ int make_dir(int inodes_idx, char *dirname, dir_ent* dir, uint32_t* size)
     {
         parent[i] = 0;
     }    
-    fwrite(size, sizeof(uint32_t), 1, dirrr);
+    fwrite(&size, sizeof(uint32_t), 1, dirrr);
     fwrite(&parent[1], sizeof(char), 32, dirrr);
     fwrite(&inodes_idx, sizeof(uint32_t), 1, dirrr);
     fwrite(parent, sizeof(char), 32, dirrr);
@@ -211,23 +211,23 @@ int make_dir(int inodes_idx, char *dirname, dir_ent* dir, uint32_t* size)
 
     //update directory
     dirrr = fopen(dir_path, "a");
-    fwrite(size, sizeof(uint32_t), 1, dirrr);
+    fwrite(&size, sizeof(uint32_t), 1, dirrr);
     fwrite(dirname, sizeof(char), 32, dirrr);
     fclose(dirrr);
 
 
     //update inodes
     dirrr = fopen("./inodes_list", "a");
-    fwrite(size, sizeof(uint32_t), 1, dirrr);
+    fwrite(&size, sizeof(uint32_t), 1, dirrr);
     fwrite(&file_mode , sizeof(char), 1, dirrr);
     fclose(dirrr);
 
-    *size = *size + 1;
+    size++;
 
     return EXIT_SUCCESS;
 }
 
-int tch(int inodes_idx, char *filename, dir_ent *dir, uint32_t *size)
+int tch(int inodes_idx, char *filename)
 {
     int m = 0;
     int new_file;
@@ -255,7 +255,7 @@ int tch(int inodes_idx, char *filename, dir_ent *dir, uint32_t *size)
     }
 
     //create new file
-    snprintf(file_path, 32, "./%d", *size);
+    snprintf(file_path, 32, "./%d", size);
     new_file = open(file_path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if (new_file == -1)
     {
@@ -268,18 +268,18 @@ int tch(int inodes_idx, char *filename, dir_ent *dir, uint32_t *size)
 
     //update directory
     dirrr = fopen(dir_path, "a");
-    fwrite(size, sizeof(uint32_t), 1, dirrr);
+    fwrite(&size, sizeof(uint32_t), 1, dirrr);
     fwrite(filename, sizeof(char), 32, dirrr);
     fclose(dirrr);
 
 
     //update inodes
     dirrr = fopen("./inodes_list", "a");
-    fwrite(size, sizeof(uint32_t), 1, dirrr);
+    fwrite(&size, sizeof(uint32_t), 1, dirrr);
     fwrite(&file_mode , sizeof(char), 1, dirrr);
     fclose(dirrr);
 
-    *size = *size + 1;
+    size++;
 
     return EXIT_SUCCESS;
 }
