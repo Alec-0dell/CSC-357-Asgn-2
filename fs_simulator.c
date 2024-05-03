@@ -83,7 +83,6 @@ int main(int argc, char *argv[])
                 
             }
             space = 0;
-            printf("line: %scommand: %s , arg: %s \n", com_line, command, name);
             //run the correct command 
             if (strcmp(command, "ls") == 0) // ls command
             {
