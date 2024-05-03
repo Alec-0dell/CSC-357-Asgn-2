@@ -6,7 +6,6 @@ uint32_t size = 0;
 int cur_inode_idx;
 dir_ent dir[MAX_INODES];
 
-
 int main(int argc, char *argv[])
 {
     int inodes_list_file;
@@ -29,6 +28,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    //open inodes file to create inodes array
     inodes_list_file = open("./inodes_list", O_RDWR);
     if (inodes_list_file == -1)
     {
@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    //creates inodes array and initializes size
     for (int j = 0; j < MAX_INODES; j++)
     {
         read(inodes_list_file, &inodes[size], 5);
@@ -45,16 +46,20 @@ int main(int argc, char *argv[])
         }
     }
 
+    //boot command line
     while (1)
     {
-        //clear command and name arrays 
+        // clear command and name arrays
         command[0] = 0;
-        for(int i = 0; i < 32; i++){
+        for (int i = 0; i < 32; i++)
+        {
             name[i] = 0;
         }
         printf("> ");
+        //get next line
         if (fgets(com_line, sizeof(com_line), stdin) != NULL)
         {
+            //split the command and arguments
             for (com_ln_idx = 0; com_line[com_ln_idx] != ' ' && com_line[com_ln_idx] != '\n'; com_ln_idx++)
             {
                 command[com_ln_idx] = com_line[com_ln_idx];
@@ -64,11 +69,13 @@ int main(int argc, char *argv[])
             for (int arg_idx = com_ln_idx; com_line[com_ln_idx] != '\n' && (com_ln_idx - arg_idx) < 32; com_ln_idx++)
             {
                 name[com_ln_idx - arg_idx] = com_line[com_ln_idx];
-                if(com_line[com_ln_idx + 1] == '\n'){
+                if (com_line[com_ln_idx + 1] == '\n')
+                {
                     name[com_ln_idx - arg_idx + 1] = 0;
                 }
             }
             command[++com_ln_idx] = 0;
+            //run the correct command 
             if (strcmp(command, "ls") == 0) // ls command
             {
                 ls(cur_inode_idx);
@@ -146,8 +153,10 @@ int cd(int inodes_idx, char *target)
     {
         if (strcmp(dir[m].name, target) == 0)
         {
-            for(int i = 0; i < size; i++){
-                if(dir[m].inode_number == inodes[i].inode_number){
+            for (int i = 0; i < size; i++)
+            {
+                if (dir[m].inode_number == inodes[i].inode_number)
+                {
                     cur_inode_idx = i;
                     close(dir_ls);
                     return EXIT_SUCCESS;
@@ -156,7 +165,7 @@ int cd(int inodes_idx, char *target)
         }
         m++;
     }
-    
+
     close(dir_ls);
     return EXIT_FAILURE;
 }
@@ -189,7 +198,7 @@ int make_dir(int inodes_idx, char *dirname)
         m++;
     }
 
-    //create new file
+    // create new file
     snprintf(file_path, 32, "./%d", size);
     new_file = open(file_path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if (new_file == -1)
@@ -199,33 +208,32 @@ int make_dir(int inodes_idx, char *dirname)
     }
     close(new_file);
 
-    //set up directory
-    //its own number: .  
-    //its parents number: ..
+    // set up directory
+    // its own number: .
+    // its parents number: ..
     dirrr = fopen(file_path, "a");
     parent[0] = '.';
     parent[1] = '.';
     for (int i = 2; i < 33; i++)
     {
         parent[i] = 0;
-    }    
+    }
     fwrite(&size, sizeof(uint32_t), 1, dirrr);
     fwrite(&parent[1], sizeof(char), 32, dirrr);
     fwrite(&inodes_idx, sizeof(uint32_t), 1, dirrr);
     fwrite(parent, sizeof(char), 32, dirrr);
     fclose(dirrr);
 
-    //update directory
+    // update directory
     dirrr = fopen(dir_path, "a");
     fwrite(&size, sizeof(uint32_t), 1, dirrr);
     fwrite(dirname, sizeof(char), 32, dirrr);
     fclose(dirrr);
 
-
-    //update inodes
+    // update inodes
     dirrr = fopen("./inodes_list", "a");
     fwrite(&size, sizeof(uint32_t), 1, dirrr);
-    fwrite(&file_mode , sizeof(char), 1, dirrr);
+    fwrite(&file_mode, sizeof(char), 1, dirrr);
     fclose(dirrr);
 
     size++;
@@ -260,7 +268,7 @@ int tch(int inodes_idx, char *filename)
         m++;
     }
 
-    //create new file
+    // create new file
     snprintf(file_path, 32, "./%d", size);
     new_file = open(file_path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if (new_file == -1)
@@ -268,21 +276,20 @@ int tch(int inodes_idx, char *filename)
         fprintf(stderr, "Error: Unable to create file '%s'.\n", filename);
         return EXIT_FAILURE;
     }
-    write(new_file, filename, 32); //fill the file with the file name
+    write(new_file, filename, 32); // fill the file with the file name
 
     close(new_file);
 
-    //update directory
+    // update directory
     dirrr = fopen(dir_path, "a");
     fwrite(&size, sizeof(uint32_t), 1, dirrr);
     fwrite(filename, sizeof(char), 32, dirrr);
     fclose(dirrr);
 
-
-    //update inodes
+    // update inodes
     dirrr = fopen("./inodes_list", "a");
     fwrite(&size, sizeof(uint32_t), 1, dirrr);
-    fwrite(&file_mode , sizeof(char), 1, dirrr);
+    fwrite(&file_mode, sizeof(char), 1, dirrr);
     fclose(dirrr);
 
     size++;
