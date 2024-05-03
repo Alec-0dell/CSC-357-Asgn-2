@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
     int com_ln_idx = 0;
     char command[6]; // for our case the most number of arguments is two.
     char name[33];
+    int arg_idx = 0;
 
     // check for correct arguments
     if (argc != 2)
@@ -73,8 +74,9 @@ int main(int argc, char *argv[])
                 command[com_ln_idx] = com_line[com_ln_idx];
             }
             command[com_ln_idx] = 0;
+            arg_idx = com_ln_idx;
             com_ln_idx++;
-            for (int arg_idx = com_ln_idx; com_line[com_ln_idx] != '\n' && (com_ln_idx - arg_idx) < 32; com_ln_idx++)
+            for (arg_idx = com_ln_idx; com_line[com_ln_idx] != '\n' && (com_ln_idx - arg_idx) < 32; com_ln_idx++)
             {
                 name[com_ln_idx - arg_idx] = com_line[com_ln_idx];
                 if (com_line[com_ln_idx + 1] == '\n')
@@ -82,8 +84,9 @@ int main(int argc, char *argv[])
                     name[com_ln_idx - arg_idx + 1] = 0;
                 }
             }
+            arg_idx = 0;
             command[++com_ln_idx] = 0;
-            printf("command: %s , arg: %s \n", command, name);
+            printf("line: %scommand: %s , arg: %s \n", com_line, command, name);
             //run the correct command 
             if (strcmp(command, "ls") == 0) // ls command
             {
