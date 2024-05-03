@@ -236,6 +236,8 @@ int make_dir( char *dirname)
     fwrite(&file_mode, sizeof(char), 1, dirrr);
     fclose(dirrr);
 
+    inodes[size].inode_number = size;
+    inodes[size].type = file_mode;
     size++;
 
     return EXIT_SUCCESS;
@@ -292,6 +294,8 @@ int tch( char *filename)
     fwrite(&file_mode, sizeof(char), 1, dirrr);
     fclose(dirrr);
 
+    inodes[size].inode_number = size;
+    inodes[size].type = file_mode;
     size++;
 
     return EXIT_SUCCESS;
