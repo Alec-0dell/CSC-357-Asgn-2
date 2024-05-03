@@ -146,8 +146,12 @@ int cd(int inodes_idx, char *target)
     {
         if (strcmp(dir[m].name, target) == 0)
         {
-            cur_inode_idx = dir[m].inode_number;
-            return EXIT_SUCCESS;
+            for(int i = 0; i < size; i++){
+                if(dir[m].inode_number == inodes[i].inode_number){
+                    cur_inode_idx = i;
+                    return EXIT_SUCCESS;
+                }
+            }
         }
         m++;
     }
