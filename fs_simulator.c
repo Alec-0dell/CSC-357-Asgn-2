@@ -11,6 +11,7 @@
 #define MAX_INODES 1024
 
 int ls(int);
+int cd(int, char *);
 
 typedef struct
 {
@@ -19,7 +20,7 @@ typedef struct
 } inode;
 
 inode inodes[MAX_INODES];
-int size = 0;
+int cur_inode_idx = 0;
 
 typedef struct
 {
@@ -32,7 +33,6 @@ dir_ent dir[MAX_INODES];
 int main(int argc, char *argv[])
 {
     int inodes_list_file;
-    int cur_inode_idx = 0;
     char com_line[512];
 
     // check for correct arguments
@@ -61,12 +61,11 @@ int main(int argc, char *argv[])
         read(inodes_list_file, &inodes[i], 5);
         if (inodes[i].inode_number < UINT_MAX && (inodes[i].type == 'f' || inodes[i].type == 'd'))
         {
-            size++; //valid i-node
-            i++;
+            i++; // valid i-node
         }
-        else 
+        else
         {
-            i--; //invalid i-node
+            i--; // invalid i-node
         }
     }
 
@@ -78,6 +77,25 @@ int main(int argc, char *argv[])
             if (strcmp(com_line, "ls\n") == 0)
             {
                 ls(cur_inode_idx);
+            }
+            else if (com_line[0] == 'c' && com_line[1] == 'd')
+            {
+                if (com_line[2] != ' ')
+                {
+                    printf("invalid arguments: cd <filename> \n");
+                }
+                else
+                {
+                    for (int i = 3; 1; i++)
+                    {
+                        if (com_line[i] == '\n')
+                        {
+                            com_line[i] = 0;
+                            break;
+                        }
+                    }
+                    cd(cur_inode_idx, &com_line[3]);
+                }
             }
             else if (strcmp(com_line, "exit\n") == 0)
             {
@@ -99,6 +117,10 @@ int ls(int inodes_idx)
     snprintf(file_path, 32, "./%d", inodes_idx);
     dir_ls = open(file_path, O_RDWR);
 
+    if(inodes[inodes_idx].type == 'f'){
+        return EXIT_SUCCESS;
+    }
+
     if (dir_ls == -1)
     {
         fprintf(stderr, "Error: Unable to open current directory.\n");
@@ -114,14 +136,13 @@ int ls(int inodes_idx)
     return EXIT_SUCCESS;
 }
 
-int cd(int inodes_idx, char *file)
+int cd(int inodes_idx, char *target)
 {
     int m = 0;
     int dir_ls;
     char file_path[32];
     snprintf(file_path, 32, "./%d", inodes_idx);
     dir_ls = open(file_path, O_RDWR);
-
     if (dir_ls == -1)
     {
         fprintf(stderr, "Error: Unable to open current directory.\n");
@@ -130,12 +151,14 @@ int cd(int inodes_idx, char *file)
 
     while (read(dir_ls, &dir[m], 36) > 0)
     {
+        if (strcmp(dir[m].name, target) == 0)
+        {
+            cur_inode_idx = dir[m].inode_number;
+            return EXIT_SUCCESS;
+        }
         m++;
     }
 
-    for (int n = 0; n < m; n++)
-    {
-        printf("%u %s \n", dir[n].inode_number, dir[n].name);
-    }
-    return EXIT_SUCCESS;
+    printf("No such file found \n");
+    return EXIT_FAILURE;
 }
