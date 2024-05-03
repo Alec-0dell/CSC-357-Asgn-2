@@ -78,19 +78,19 @@ int main(int argc, char *argv[])
             //run the correct command 
             if (strcmp(command, "ls") == 0) // ls command
             {
-                ls(cur_inode_idx);
+                ls();
             }
             else if (strcmp(command, "cd") == 0) // cd command
             {
-                cd(cur_inode_idx, name);
+                cd(name);
             }
             else if (strcmp(command, "mkdir") == 0) // mkdir command
             {
-                make_dir(cur_inode_idx, name);
+                make_dir(name);
             }
             else if (strcmp(command, "touch") == 0) // touch command
             {
-                tch(cur_inode_idx, name);
+                tch(name);
             }
             else if (strcmp(command, "exit") == 0) // exit command
             {
@@ -108,15 +108,15 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-int ls(int inodes_idx)
+int ls(void)
 {
     int m = 0;
     int dir_ls;
     char file_path[32];
-    snprintf(file_path, 32, "./%d", inodes[inodes_idx].inode_number);
+    snprintf(file_path, 32, "./%d", inodes[cur_inode_idx].inode_number);
     dir_ls = open(file_path, O_RDWR);
 
-    if (inodes[inodes_idx].type == 'f')
+    if (inodes[cur_inode_idx].type == 'f')
     {
         return EXIT_SUCCESS;
     }
@@ -136,12 +136,12 @@ int ls(int inodes_idx)
     return EXIT_SUCCESS;
 }
 
-int cd(int inodes_idx, char *target)
+int cd( char *target)
 {
     int m = 0;
     int dir_ls;
     char dir_path[32];
-    snprintf(dir_path, 32, "./%d", inodes[inodes_idx].inode_number);
+    snprintf(dir_path, 32, "./%d", inodes[cur_inode_idx].inode_number);
     dir_ls = open(dir_path, O_RDWR);
     if (dir_ls == -1)
     {
@@ -170,7 +170,7 @@ int cd(int inodes_idx, char *target)
     return EXIT_FAILURE;
 }
 
-int make_dir(int inodes_idx, char *dirname)
+int make_dir( char *dirname)
 {
     int m = 0;
     int new_file;
@@ -180,7 +180,7 @@ int make_dir(int inodes_idx, char *dirname)
     char file_path[32];
     char parent[33];
     FILE *dirrr;
-    snprintf(dir_path, 32, "./%d", inodes[inodes_idx].inode_number);
+    snprintf(dir_path, 32, "./%d", inodes[cur_inode_idx].inode_number);
     dirr = open(dir_path, O_RDWR);
     if (dirr == -1)
     {
@@ -220,7 +220,7 @@ int make_dir(int inodes_idx, char *dirname)
     }
     fwrite(&size, sizeof(uint32_t), 1, dirrr);
     fwrite(&parent[1], sizeof(char), 32, dirrr);
-    fwrite(&inodes_idx, sizeof(uint32_t), 1, dirrr);
+    fwrite(&cur_inode_idx, sizeof(uint32_t), 1, dirrr);
     fwrite(parent, sizeof(char), 32, dirrr);
     fclose(dirrr);
 
@@ -241,7 +241,7 @@ int make_dir(int inodes_idx, char *dirname)
     return EXIT_SUCCESS;
 }
 
-int tch(int inodes_idx, char *filename)
+int tch( char *filename)
 {
     int m = 0;
     int new_file;
@@ -250,7 +250,7 @@ int tch(int inodes_idx, char *filename)
     char dir_path[32];
     char file_path[32];
     FILE *dirrr;
-    snprintf(dir_path, 32, "./%d", inodes[inodes_idx].inode_number);
+    snprintf(dir_path, 32, "./%d", inodes[cur_inode_idx].inode_number);
     dirr = open(dir_path, O_RDWR);
     if (dirr == -1)
     {
