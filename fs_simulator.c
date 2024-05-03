@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "fs_simulator.h"
 
 inode inodes[MAX_INODES];
@@ -79,7 +80,6 @@ int main(int argc, char *argv[])
             else if (strcmp(command, "mkdir") == 0) // mkdir command
             {
                 make_dir(cur_inode_idx, name);
-                printf("mkdir good \n");
             }
             else if (strcmp(command, "touch") == 0) // touch command
             {
@@ -146,19 +146,90 @@ int cd(int inodes_idx, char *target)
     {
         if (strcmp(dir[m].name, target) == 0)
         {
+            if(inodes[dir[m].inode_number].type != 'd'){
+                printf("Cannot inspect a file, enter a directory name \n");
+                return EXIT_FAILURE;
+            }
             cur_inode_idx = dir[m].inode_number;
             return EXIT_SUCCESS;
         }
         m++;
     }
 
-    printf("No such file found: %s \n", target);
+    printf("No such directory found: %s \n", target);
     return EXIT_FAILURE;
 }
 
-int make_dir(int inodes_idx, char *target)
+int make_dir(int inodes_idx, char *dirname)
 {
-    return 1;
+    int m = 0;
+    int new_file;
+    int dirr;
+    char file_mode = 'd';
+    char dir_path[32];
+    char file_path[32];
+    char parent[33];
+    FILE *dirrr;
+    snprintf(dir_path, 32, "./%d", inodes_idx);
+    dirr = open(dir_path, O_RDWR);
+    if (dirr == -1)
+    {
+        fprintf(stderr, "Error: Unable to open current directory.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Check if file already exists
+    while (read(dirr, &dir[m], 36) > 0)
+    {
+        if (strcmp(dir[m].name, dirname) == 0)
+        {
+            return EXIT_SUCCESS;
+        }
+        m++;
+    }
+
+    //create new file
+    snprintf(file_path, 32, "./%d", size);
+    new_file = open(file_path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    if (new_file == -1)
+    {
+        fprintf(stderr, "Error: Unable to create file '%s'.\n", dirname);
+        return EXIT_FAILURE;
+    }
+    close(new_file);
+
+    //set up directory
+    //its own number: .  
+    //its parents number: ..
+    dirrr = fopen(file_path, "a");
+    parent[0] = '.';
+    parent[1] = '.';
+    for (int i = 2; i < 33; i++)
+    {
+        parent[i] = 0;
+    }    
+    fwrite(&size, sizeof(uint32_t), 1, dirrr);
+    fwrite(&parent[1], sizeof(char), 32, dirrr);
+    fwrite(&inodes_idx, sizeof(uint32_t), 1, dirrr);
+    fwrite(parent, sizeof(char), 32, dirrr);
+    fclose(dirrr);
+
+    //update directory
+    dirrr = fopen(dir_path, "a");
+    fwrite(&size, sizeof(uint32_t), 1, dirrr);
+    fwrite(dirname, sizeof(char), 32, dirrr);
+    fclose(dirrr);
+
+
+    //update inodes
+    dirrr = fopen("./inodes_list", "a");
+    fwrite(&size, sizeof(uint32_t), 1, dirrr);
+    fwrite(&file_mode , sizeof(char), 1, dirrr);
+    fclose(dirrr);
+
+    size++;
+
+    return EXIT_SUCCESS;
 }
 
 int tch(int inodes_idx, char *filename)
