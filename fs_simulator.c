@@ -155,8 +155,7 @@ int cd(int inodes_idx, char *target)
         }
         m++;
     }
-
-    printf("No such directory found: %s \n", target);
+    
     return EXIT_FAILURE;
 }
 
