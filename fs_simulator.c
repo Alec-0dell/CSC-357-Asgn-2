@@ -113,7 +113,7 @@ int ls(int inodes_idx)
     int m = 0;
     int dir_ls;
     char file_path[32];
-    snprintf(file_path, 32, "./%d", inodes_idx);
+    snprintf(file_path, 32, "./%d", inodes[inodes_idx].inode_number);
     dir_ls = open(file_path, O_RDWR);
 
     if (inodes[inodes_idx].type == 'f')
@@ -141,7 +141,7 @@ int cd(int inodes_idx, char *target)
     int m = 0;
     int dir_ls;
     char dir_path[32];
-    snprintf(dir_path, 32, "./%d", inodes_idx);
+    snprintf(dir_path, 32, "./%d", inodes[inodes_idx].inode_number);
     dir_ls = open(dir_path, O_RDWR);
     if (dir_ls == -1)
     {
@@ -180,7 +180,7 @@ int make_dir(int inodes_idx, char *dirname)
     char file_path[32];
     char parent[33];
     FILE *dirrr;
-    snprintf(dir_path, 32, "./%d", inodes_idx);
+    snprintf(dir_path, 32, "./%d", inodes[inodes_idx].inode_number);
     dirr = open(dir_path, O_RDWR);
     if (dirr == -1)
     {
@@ -250,7 +250,7 @@ int tch(int inodes_idx, char *filename)
     char dir_path[32];
     char file_path[32];
     FILE *dirrr;
-    snprintf(dir_path, 32, "./%d", inodes_idx);
+    snprintf(dir_path, 32, "./%d", inodes[inodes_idx].inode_number);
     dirr = open(dir_path, O_RDWR);
     if (dirr == -1)
     {
