@@ -46,6 +46,11 @@ int main(int argc, char *argv[])
 
     while (1)
     {
+        //clear command and name arrays 
+        command[0] = 0;
+        for(int i = 0; i < 32; i++){
+            name[i] = 0;
+        }
         printf("> ");
         if (fgets(com_line, sizeof(com_line), stdin) != NULL)
         {
@@ -79,7 +84,6 @@ int main(int argc, char *argv[])
             else if (strcmp(command, "touch") == 0) // touch command
             {
                 tch(cur_inode_idx, name);
-                printf("touch good \n");
             }
             else if (strcmp(command, "exit") == 0) // exit command
             {
@@ -90,8 +94,6 @@ int main(int argc, char *argv[])
                 printf("No such command \n");
             }
         }
-        command[0] = 0;
-        name[0] = 0;
     }
 
     close(inodes_list_file);
@@ -188,7 +190,6 @@ int tch(int inodes_idx, char *filename)
 
     //create new file
     snprintf(file_path, 32, "./%d", size);
-    size++;
     new_file = open(file_path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if (new_file == -1)
     {
@@ -211,6 +212,8 @@ int tch(int inodes_idx, char *filename)
     fwrite(&size, sizeof(uint32_t), 1, dirrr);
     fwrite(&file_mode , sizeof(char), 1, dirrr);
     fclose(dirrr);
-    
+
+    size++;
+
     return EXIT_SUCCESS;
 }
