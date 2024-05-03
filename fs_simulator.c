@@ -149,13 +149,15 @@ int cd(int inodes_idx, char *target)
             for(int i = 0; i < size; i++){
                 if(dir[m].inode_number == inodes[i].inode_number){
                     cur_inode_idx = i;
+                    close(dir_ls);
                     return EXIT_SUCCESS;
                 }
             }
         }
         m++;
     }
-
+    
+    close(dir_ls);
     return EXIT_FAILURE;
 }
 
