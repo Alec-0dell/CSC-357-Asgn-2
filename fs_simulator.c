@@ -137,7 +137,7 @@ int ls(void)
 
     while (read(dir_ls, &dir[m], 36) > 0)
     {
-        printf("%u %s \n", dir[m].inode_number, dir[m].name);
+        printf("%u %s\n", dir[m].inode_number, dir[m].name);
         m++;
     }
 
