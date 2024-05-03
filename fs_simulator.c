@@ -50,10 +50,17 @@ int main(int argc, char *argv[])
     while (1)
     {
         // clear command and name arrays
-        command[0] = 0;
+        for (int i = 0; i < 6; i++)
+        {
+            command[i] = 0;
+        }
         for (int i = 0; i < 32; i++)
         {
             name[i] = 0;
+        }
+        for (int i = 0; i < 38; i++)
+        {
+            command[i] = 0;
         }
         printf("> ");
         //get next line
@@ -75,6 +82,7 @@ int main(int argc, char *argv[])
                 }
             }
             command[++com_ln_idx] = 0;
+            printf("command: %s , arg: %s", command, name);
             //run the correct command 
             if (strcmp(command, "ls") == 0) // ls command
             {
